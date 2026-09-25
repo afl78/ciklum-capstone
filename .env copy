@@ -1,0 +1,6 @@
+GEMINI_MODEL=gemini-3.1-flash-lite
+GOOGLE_API_KEY=AIzaSyCCIDQWpOylFsl1a1Z-lFbbJvNf__oWDE8
+
+PDF_PATH = data/Databases for GenAI.pdf
+AUDIO_PATH = data/2 part Databases for GenAI.mp4
+DB_DIR = ./chroma_db
