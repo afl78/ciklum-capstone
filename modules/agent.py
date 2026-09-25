@@ -17,7 +17,7 @@ def create_rag_agent(vector_db, run_timestamp: str, attempt: int = 1):
     # Pass session timestamp and current attempt iteration to tools
     tools = get_tools(vector_db, run_timestamp, attempt)
     
-    prompt_path = os.path.join("prompts", "security_auditor.txt")
+    prompt_path = os.path.join("prompts", "security_auditor_prompt.txt")
     if os.path.exists(prompt_path):
         with open(prompt_path, "r", encoding="utf-8") as f:
             system_prompt = f.read()
