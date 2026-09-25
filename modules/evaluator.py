@@ -2,8 +2,24 @@ import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 
+def load_evaluator_prompt(prompt_path: str = "prompts/evaluator_prompt.txt") -> str:
+    """Reads the evaluator prompt template from external config file with fallback protection."""
+    if os.path.exists(prompt_path):
+        with open(prompt_path, "r", encoding="utf-8") as f:
+            return f.read()
+    
+    # Fallback template if file is not found
+    return (
+        "You are a Security Auditor.\n\n"
+        "TASK:\n{task_prompt}\n\n"
+        "RESPONSE:\n{agent_output}\n\n"
+        "Provide your evaluation in format:\n"
+        "STATUS: [PASSED or NEEDS_REVISION]\n"
+        "CRITIQUE: <feedback>"
+    )
+
 def evaluate_performance(task_prompt: str, agent_output: str):
-    """Evaluates agent output against task prompt and explicit OWASP security rubrics."""
+    """Evaluates agent output against task prompt using externalized evaluation template."""
     model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
     api_key = os.getenv("GOOGLE_API_KEY")
 
@@ -14,39 +30,20 @@ def evaluate_performance(task_prompt: str, agent_output: str):
         max_retries=5
     )
 
-    eval_template = PromptTemplate.from_template("""
-You are a Principal Application Security Auditor evaluating an AI Security Agent's response.
+    # 1. Load prompt template string from external file
+    raw_template_string = load_evaluator_prompt("prompts/evaluator_prompt.txt")
+    eval_template = PromptTemplate.from_template(raw_template_string)
 
-SECURITY TASK:
-{task_prompt}
-
-AGENT RESPONSE:
-{agent_output}
-
-EVALUATION RUBRIC:
-1. Vulnerability Accuracy: Did the agent correctly identify the OWASP Top 10 for LLM risk categories (e.g., LLM01, LLM02) relevant to the target?
-2. Remediation Quality: Are the proposed code or configuration fixes concrete, secure, and production-ready?
-3. Action Completion: Did the agent state that it inspected the local file, searched security rules, and saved output files as requested?
-
-DECISION CRITERIA:
-- Mark STATUS as PASSED only if all 3 criteria are fully satisfied and output files are created/refactored properly.
-- Mark STATUS as NEEDS_REVISION if any criteria fail or if output generation was skipped.
-
-Provide your evaluation in this EXACT format:
-STATUS: [PASSED or NEEDS_REVISION]
-SCORE: [X/10]
-IDENTIFIED_RISKS: [List identified OWASP codes or 'None']
-CRITIQUE: <Provide direct, actionable instructions on what is missing or wrong so the agent can fix it on the next turn. If PASSED, write 'No issues found.'>
-""")
-
+    # 2. Format variables into prompt template
     formatted_prompt = eval_template.format(
         task_prompt=task_prompt,
         agent_output=agent_output
     )
 
+    # 3. Invoke evaluator LLM
     res = evaluator_llm.invoke(formatted_prompt)
     
-    # Safely unpack string content whether res.content is str or list
+    # 4. Safely extract string content
     raw_content = res.content
     if isinstance(raw_content, list):
         text_blocks = []
@@ -63,7 +60,7 @@ CRITIQUE: <Provide direct, actionable instructions on what is missing or wrong s
     else:
         response_text = str(raw_content)
 
-    # Normalize text safely
+    # 5. Normalize text and parse evaluation status
     normalized_response = response_text.upper().replace("*", "").replace("[", "").replace("]", "")
     is_passed = "STATUS: PASSED" in normalized_response
 

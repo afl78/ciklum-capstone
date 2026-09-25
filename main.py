@@ -14,7 +14,8 @@ from modules import (
     evaluate_performance,
     ConsoleLogger,
     load_tasks,
-    log_agent_execution_stream
+    log_agent_execution_stream,
+    load_critique_prompt
 )
 
 def main():
@@ -93,11 +94,9 @@ def main():
                 if attempt < max_retries:
                     print(f"\n⚠️ Audit feedback requires improvement. Re-injecting critique into agent instructions for Attempt {attempt + 1}...")
                     
-                    critique_prompt = (
-                        f"Your previous attempt was evaluated and requires improvement.\n\n"
-                        f"AUDITOR CRITIQUE & INSTRUCTIONS:\n{eval_result['feedback']}\n\n"
-                        f"Please re-examine the target files, consult ChromaDB rules if necessary, rewrite/save updated outputs, and address all feedback points."
-                    )
+                    # Load and format the external critique template
+                    raw_critique_template = load_critique_prompt("prompts/critique_prompt.txt")
+                    critique_prompt = raw_critique_template.format(feedback=eval_result['feedback'])
                     
                     conversation_messages.append(("assistant", final_answer))
                     conversation_messages.append(("human", critique_prompt))
