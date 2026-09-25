@@ -1,12 +1,9 @@
 import os
+from datetime import datetime
 from langchain.tools import tool
 from modules.generator import query_chatbot
 
 def get_tools(vector_db):
-    """
-    Creates and returns the tool set for the Security Auditor agent.
-    Tools are closure-bound to access the local vector_db instance.
-    """
 
     @tool
     def search_owasp_security_rules(query: str):
@@ -27,10 +24,15 @@ def get_tools(vector_db):
 
     @tool
     def write_output_file(content: str, filename: str):
-        """Action: Saves generated security outputs (patched code files, markdown security reports,
-        or audit tickets) directly into the 'outputs' folder."""
+        """Action: Saves generated security outputs directly into the 'outputs' folder 
+        prefixed with a unique execution timestamp."""
         os.makedirs("outputs", exist_ok=True)
-        path = os.path.join("outputs", filename)
+        
+        # Prepend ISO timestamp
+        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+        timestamped_filename = f"{timestamp}_{filename}"
+        
+        path = os.path.join("outputs", timestamped_filename)
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         return f"File successfully saved to {path}"

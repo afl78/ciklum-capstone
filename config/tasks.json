@@ -1,0 +1,12 @@
+[
+  {
+    "id": "TASK_001",
+    "name": "Audit Python Bot Code",
+    "prompt": "Inspect my local 'targets/bot.py' file. Search ChromaDB for OWASP rules on LLM01 (Prompt Injection) and LLM02 (Insecure Output Handling / Disclosure). Identify vulnerabilities in bot.py, explain why they are risky, and save a refactored, secure version named 'bot_fixed.py' in the outputs folder."
+  },
+  {
+    "id": "TASK_002",
+    "name": "Audit System Prompt Configuration",
+    "prompt": "Inspect my local 'targets/system_prompt.txt' file. Search ChromaDB for OWASP rules on System Prompt Leakage and Sensitive Information Disclosure. Identify security risks in the configuration and write a detailed audit report named 'prompt_audit.md' in the outputs folder."
+  }
+]
