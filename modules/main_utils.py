@@ -3,17 +3,13 @@ import sys
 import json
 
 class ConsoleLogger:
-    """Duplicates stdout stream to both terminal console and a timestamped log file,
-    automatically unescaping literal raw \\n sequences in all printed strings."""
+    """Duplicates stdout stream to both terminal console and a timestamped log file."""
     
     def __init__(self, log_filepath):
         self.terminal = sys.stdout
         self.log_file = open(log_filepath, "w", encoding="utf-8")
 
     def write(self, message):
-        if isinstance(message, str) and "\\n" in message:
-            message = message.replace("\\n", "\n")
-            
         self.terminal.write(message)
         self.log_file.write(message)
         self.log_file.flush()
@@ -23,7 +19,6 @@ class ConsoleLogger:
         self.log_file.flush()
 
     def isatty(self):
-        """Delegates tty check to original stdout to fix HuggingFace log styling."""
         return getattr(self.terminal, "isatty", lambda: False)()
 
     def close(self):
@@ -52,6 +47,5 @@ def log_agent_execution_stream(result):
                 print(f"   ➔ ⚙️  [Tool Invoked]: {tool_name}")
                 print(f"      📥 [Parameters]: {tool_args}")
         elif msg.type == "tool":
-            raw_content = str(msg.content).replace("\\n", "\n")
-            preview = raw_content[:120].replace('\n', ' ')
+            preview = str(msg.content)[:120].replace('\n', ' ')
             print(f"   ➔ 🟢 [Tool Response ({msg.name})]: {preview}...")

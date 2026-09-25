@@ -45,8 +45,8 @@ def main():
             print("📚 Loading existing OWASP Security Knowledge Base...")
             vector_db = load_existing_db(DB_DIR)
 
-        # 3. Instantiate Agent System
-        agent_executor = create_rag_agent(vector_db)
+        # 3. Instantiate Agent System with Session Timestamp
+        agent_executor = create_rag_agent(vector_db, run_timestamp)
 
         # 4. Load System Tasks
         tasks = load_tasks("config/tasks.json")

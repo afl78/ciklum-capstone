@@ -1,9 +1,8 @@
 import os
-from datetime import datetime
 from langchain.tools import tool
 from modules.generator import query_chatbot
 
-def get_tools(vector_db):
+def get_tools(vector_db, run_timestamp: str):
 
     @tool
     def search_owasp_security_rules(query: str):
@@ -25,12 +24,11 @@ def get_tools(vector_db):
     @tool
     def write_output_file(content: str, filename: str):
         """Action: Saves generated security outputs directly into the 'outputs' folder 
-        prefixed with a unique execution timestamp."""
+        prefixed with the execution session timestamp."""
         os.makedirs("outputs", exist_ok=True)
         
-        # Prepend ISO timestamp
-        timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-        timestamped_filename = f"{timestamp}_{filename}"
+        # Use the session-wide timestamp passed during tool initialization
+        timestamped_filename = f"{run_timestamp}_{filename}"
         
         path = os.path.join("outputs", timestamped_filename)
         with open(path, "w", encoding="utf-8") as f:
