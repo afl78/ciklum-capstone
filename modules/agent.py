@@ -4,7 +4,7 @@ from langchain.agents import create_agent
 from .tools import get_tools
 
 def create_rag_agent(vector_db, run_timestamp: str, attempt: int = 1):
-    model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    model_name = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
     api_key = os.getenv("GOOGLE_API_KEY")
 
     llm = ChatGoogleGenerativeAI(

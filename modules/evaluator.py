@@ -20,7 +20,7 @@ def load_evaluator_prompt(prompt_path: str = "prompts/evaluator_prompt.txt") -> 
 
 def evaluate_performance(task_prompt: str, agent_output: str):
     """Evaluates agent output against task prompt using externalized evaluation template."""
-    model_name = os.getenv("GEMINI_MODEL", "gemini-2.5-flash")
+    model_name = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
     api_key = os.getenv("GOOGLE_API_KEY")
 
     evaluator_llm = ChatGoogleGenerativeAI(
