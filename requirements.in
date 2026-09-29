@@ -7,7 +7,6 @@ langgraph
 # Integration Packages
 langchain-google-genai
 langchain-chroma
-pymupdf
 langchain-huggingface
 
 # Heavy Lifters (Engines)
