@@ -8,7 +8,7 @@ from .generator import query_chatbot
 from .agent import create_rag_agent
 from .tools import get_tools
 from .evaluator import evaluate_performance
-from .main_utils import ConsoleLogger, load_tasks, log_agent_execution_stream
+from .main_utils import ConsoleLogger, load_tasks, log_agent_execution_stream, load_critique_prompt
 
 # Define __all__ to control what is exported when someone uses 'from modules import *'
 __all__ = [
@@ -22,4 +22,5 @@ __all__ = [
     "ConsoleLogger",
     "load_tasks",
     "log_agent_execution_stream"
+    "load_critique_prompt"
 ]

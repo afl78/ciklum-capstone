@@ -3,7 +3,7 @@ from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain.agents import create_agent
 from .tools import get_tools
 
-def create_rag_agent(vector_db, run_timestamp: str):
+def create_rag_agent(vector_db, run_timestamp: str, attempt: int = 1):
     model_name = os.getenv("GEMINI_MODEL", "gemini-3.1-flash-lite")
     api_key = os.getenv("GOOGLE_API_KEY")
 
@@ -14,10 +14,10 @@ def create_rag_agent(vector_db, run_timestamp: str):
         max_retries=5
     )
     
-    # Pass session timestamp to tools
-    tools = get_tools(vector_db, run_timestamp)
+    # Pass session timestamp and current attempt iteration to tools
+    tools = get_tools(vector_db, run_timestamp, attempt)
     
-    prompt_path = os.path.join("prompts", "security_auditor.txt")
+    prompt_path = os.path.join("prompts", "security_auditor_prompt.txt")
     if os.path.exists(prompt_path):
         with open(prompt_path, "r", encoding="utf-8") as f:
             system_prompt = f.read()

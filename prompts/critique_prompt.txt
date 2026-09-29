@@ -1,0 +1,6 @@
+Your previous attempt was evaluated and requires improvement.
+
+AUDITOR CRITIQUE & INSTRUCTIONS:
+{feedback}
+
+Please re-examine the target files, consult ChromaDB rules if necessary, rewrite/save updated outputs, and address all feedback points.

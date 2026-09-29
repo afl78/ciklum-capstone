@@ -8,5 +8,15 @@
     "id": "TASK_002",
     "name": "Audit System Prompt Configuration",
     "prompt": "Inspect my local 'targets/system_prompt.txt' file. Search ChromaDB for OWASP rules on System Prompt Leakage and Sensitive Information Disclosure. Identify security risks in the configuration and write a detailed audit report named 'prompt_audit.md' in the outputs folder."
+  },
+  {
+    "id": "TASK_003",
+    "name": "Audit Agent Tool Permissions",
+    "prompt": "Inspect 'targets/agent_tools.py'. Search ChromaDB for LLM08 (Excessive Agency). Identify unconstrained tool permissions and save a refactored version named 'agent_tools_fixed.py' to outputs."
+  },
+  {
+    "id": "TASK_004",
+    "name": "Audit API Webhook Endpoint",
+    "prompt": "Inspect 'targets/api_router.py'. Search ChromaDB for LLM07 (Insecure Plugin Design). Identify SSRF or parameter injection risks and save a secure version named 'api_router_fixed.py' to outputs."
   }
 ]

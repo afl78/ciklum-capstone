@@ -49,3 +49,16 @@ def log_agent_execution_stream(result):
         elif msg.type == "tool":
             preview = str(msg.content)[:120].replace('\n', ' ')
             print(f"   ➔ 🟢 [Tool Response ({msg.name})]: {preview}...")
+
+def load_critique_prompt(prompt_path: str = "prompts/critique_prompt.txt") -> str:
+    """Reads the critique template from external file with fallback protection."""
+    if os.path.exists(prompt_path):
+        with open(prompt_path, "r", encoding="utf-8") as f:
+            return f.read()
+    
+    # Fallback template if file is missing
+    return (
+        "Your previous attempt requires improvement.\n\n"
+        "AUDITOR CRITIQUE:\n{feedback}\n\n"
+        "Please address all feedback points and update your outputs."
+    )            

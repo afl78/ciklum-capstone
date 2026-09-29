@@ -14,11 +14,13 @@ from modules import (
     evaluate_performance,
     ConsoleLogger,
     load_tasks,
-    log_agent_execution_stream
+    log_agent_execution_stream,
+    load_critique_prompt
 )
 
-def main():
-    # 1. Initialize Logging Session
+
+def init_logging():
+    """Initializes timestamped logging session and redirects sys.stdout."""
     os.makedirs("logs", exist_ok=True)
     run_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     log_filename = f"logs/{run_timestamp}_execution_log.txt"
@@ -28,27 +30,86 @@ def main():
 
     print(f"🕒 System Start: {time.strftime('%H:%M:%S')} (Session ID: {run_timestamp})")
     print(f"📝 Logging session output to: {log_filename}\n")
+    
+    return logger, log_filename, run_timestamp
+
+
+def load_pipeline_config():
+    """Loads system execution settings from environment variables."""
+    pdf_path = os.getenv("PDF_PATH", "data/OWASP_LLM_Top_10.pdf")
+    db_dir = os.getenv("DB_DIR", "./chroma_db")
+    max_retries = int(os.getenv("MAX_AUDIT_RETRIES", 3))
+
+    print(f"⚙️ Config Loaded | PDF Path: '{pdf_path}' | DB Dir: '{db_dir}' | Max Retries: {max_retries}\n")
+    return pdf_path, db_dir, max_retries
+
+
+def get_or_create_vector_db(pdf_path: str, db_dir: str):
+    """Initializes ChromaDB vector store if missing, otherwise loads existing database."""
+    if not os.path.exists(db_dir):
+        print("🚀 Initializing OWASP Security Knowledge Base (First time setup)...")
+        if not os.path.exists(pdf_path):
+            raise FileNotFoundError(f"❌ PDF file not found at '{pdf_path}'.")
+        pdf_docs = ingest_data(pdf_path)
+        vector_db = create_vector_db(pdf_docs, db_dir)
+        print("✅ Database created and persisted.")
+    else:
+        print("📚 Loading existing OWASP Security Knowledge Base...")
+        vector_db = load_existing_db(db_dir)
+        
+    return vector_db
+
+
+def execute_task_retry_loop(vector_db, task_prompt, run_timestamp, max_retries):
+    """Executes the agent workflow and evaluator reflection loop for a single task."""
+    conversation_messages = [("human", task_prompt)]
+    attempt = 1
+
+    while attempt <= max_retries:
+        print(f"\n🔄 [Execution Attempt {attempt}/{max_retries}]:")
+        
+        # Instantiate agent executor dynamically with current attempt version
+        agent_executor = create_rag_agent(vector_db, run_timestamp, attempt)
+        
+        # Execute Agent Graph
+        result = agent_executor.invoke({"messages": conversation_messages})
+        log_agent_execution_stream(result)
+        
+        final_answer = result["messages"][-1].content
+        print(f"\n🤖 [Agent Final Output (Attempt {attempt})]:\n{final_answer}")
+        
+        # Evaluator Pass
+        print("\n🧐 [Auditor Reflection Pass]:")
+        eval_result = evaluate_performance(task_prompt, final_answer)
+        print(eval_result["feedback"])
+        
+        if eval_result["is_passed"]:
+            print(f"\n✅ Task passed security audit on attempt {attempt}!")
+            break
+        
+        if attempt < max_retries:
+            print(f"\n⚠️ Audit feedback requires improvement. Re-injecting critique into agent instructions for Attempt {attempt + 1}...")
+            
+            raw_critique_template = load_critique_prompt("prompts/critique_prompt.txt")
+            critique_prompt = raw_critique_template.format(feedback=eval_result['feedback'])
+            
+            conversation_messages.append(("assistant", final_answer))
+            conversation_messages.append(("human", critique_prompt))
+        else:
+            print(f"\n❌ Reached maximum retries ({max_retries}). Continuing to next task.")
+        
+        attempt += 1
+
+
+def main():
+    logger, log_filename, run_timestamp = init_logging()
 
     try:
-        PDF_PATH = os.getenv("PDF_PATH", "data/OWASP_LLM_Top_10.pdf")
-        DB_DIR = os.getenv("DB_DIR", "./chroma_db")
-        
-        # 2. Initialize or Load Security Knowledge Base
-        if not os.path.exists(DB_DIR):
-            print("🚀 Initializing OWASP Security Knowledge Base (First time setup)...")
-            if not os.path.exists(PDF_PATH):
-                raise FileNotFoundError(f"❌ PDF file not found at '{PDF_PATH}'.")
-            pdf_docs = ingest_data(PDF_PATH)
-            vector_db = create_vector_db(pdf_docs, DB_DIR)
-            print("✅ Database created and persisted.")
-        else:
-            print("📚 Loading existing OWASP Security Knowledge Base...")
-            vector_db = load_existing_db(DB_DIR)
+        # Load environment config together (PDF, DB, and Retries)
+        pdf_path, db_dir, max_retries = load_pipeline_config()
 
-        # 3. Instantiate Agent System with Session Timestamp
-        agent_executor = create_rag_agent(vector_db, run_timestamp)
-
-        # 4. Load System Tasks
+        # Load Knowledge Base & Tasks
+        vector_db = get_or_create_vector_db(pdf_path, db_dir)
         tasks = load_tasks("config/tasks.json")
 
         print("\n==================================================")
@@ -65,26 +126,15 @@ def main():
             print(f"📝 [Task Prompt]: {task_prompt}")
             print(f"--------------------------------------------------")
             
-            # Execute Agent Graph Loop
-            result = agent_executor.invoke({"messages": [("human", task_prompt)]})
-            
-            # Print Real-Time Tool Execution Logs
-            log_agent_execution_stream(result)
-            
-            # Print Final LLM Answer
-            final_answer = result["messages"][-1].content
-            print(f"\n🤖 [Agent Final Output]:\n{final_answer}")
-            
-            # Reflection & Evaluation Pass
-            print("\n🧐 [Auditor Reflection Pass]:")
-            audit_results = evaluate_performance(task_prompt, final_answer)
-            print(audit_results)
+            execute_task_retry_loop(vector_db, task_prompt, run_timestamp, max_retries)
+
             print("=" * 50)
 
     finally:
         print(f"\n📁 Log session complete. File saved to: {log_filename}")
         sys.stdout = logger.terminal
         logger.close()
+
 
 if __name__ == "__main__":
     start_time = time.time()
@@ -93,7 +143,7 @@ if __name__ == "__main__":
 
     end_time = time.time()
     total_duration = end_time - start_time
-    print("\n" + "="*50)
+    print("\n" + "=" * 50)
     print(f"🏁 System Finished: {time.strftime('%H:%M:%S')}")
     print(f"⏱️ Total Execution Time: {str(timedelta(seconds=round(total_duration)))} (H:MM:SS)")
-    print("="*50)
+    print("=" * 50)

@@ -2,7 +2,7 @@ import os
 from langchain.tools import tool
 from modules.generator import query_chatbot
 
-def get_tools(vector_db, run_timestamp: str):
+def get_tools(vector_db, run_timestamp: str, attempt: int = 1):
 
     @tool
     def search_owasp_security_rules(query: str):
@@ -13,8 +13,7 @@ def get_tools(vector_db, run_timestamp: str):
 
     @tool
     def read_local_file(file_path: str):
-        """Action: Reads and returns the raw text content of a local file (e.g., Python scripts,
-        configuration files, or system prompt files) for security auditing."""
+        """Action: Reads and returns the raw text content of a local file for security auditing."""
         try:
             with open(file_path, "r", encoding="utf-8") as f:
                 return f.read()
@@ -24,13 +23,17 @@ def get_tools(vector_db, run_timestamp: str):
     @tool
     def write_output_file(content: str, filename: str):
         """Action: Saves generated security outputs directly into the 'outputs' folder 
-        prefixed with the execution session timestamp."""
+        prefixed with execution session timestamp and suffixed with the attempt version."""
         os.makedirs("outputs", exist_ok=True)
         
-        # Use the session-wide timestamp passed during tool initialization
-        timestamped_filename = f"{run_timestamp}_{filename}"
+        # Split filename to insert the attempt version suffix before extension
+        # e.g., 'bot_fixed.py' -> name='bot_fixed', ext='.py'
+        name, ext = os.path.splitext(filename)
         
-        path = os.path.join("outputs", timestamped_filename)
+        # Output format: outputs/20260925_143005_bot_fixed_v1.py
+        versioned_filename = f"{run_timestamp}_{name}_v{attempt}{ext}"
+        
+        path = os.path.join("outputs", versioned_filename)
         with open(path, "w", encoding="utf-8") as f:
             f.write(content)
         return f"File successfully saved to {path}"
