@@ -90,7 +90,7 @@ def execute_task_retry_loop(vector_db, task_prompt, run_timestamp, max_retries):
         if attempt < max_retries:
             print(f"\n⚠️ Audit feedback requires improvement. Re-injecting critique into agent instructions for Attempt {attempt + 1}...")
             
-            raw_critique_template = load_critique_prompt("prompts/critique_prompt.txt")
+            raw_critique_template = load_critique_prompt("config/prompts/critique_prompt.txt")
             critique_prompt = raw_critique_template.format(feedback=eval_result['feedback'])
             
             conversation_messages.append(("assistant", final_answer))

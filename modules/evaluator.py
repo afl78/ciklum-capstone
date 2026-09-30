@@ -2,7 +2,7 @@ import os
 from langchain_google_genai import ChatGoogleGenerativeAI
 from langchain_core.prompts import PromptTemplate
 
-def load_evaluator_prompt(prompt_path: str = "prompts/evaluator_prompt.txt") -> str:
+def load_evaluator_prompt(prompt_path: str = "config/prompts/evaluator_prompt.txt") -> str:
     """Reads the evaluator prompt template from external config file with fallback protection."""
     if os.path.exists(prompt_path):
         with open(prompt_path, "r", encoding="utf-8") as f:
@@ -31,7 +31,7 @@ def evaluate_performance(task_prompt: str, agent_output: str):
     )
 
     # 1. Load prompt template string from external file
-    raw_template_string = load_evaluator_prompt("prompts/evaluator_prompt.txt")
+    raw_template_string = load_evaluator_prompt("config/prompts/evaluator_prompt.txt")
     eval_template = PromptTemplate.from_template(raw_template_string)
 
     # 2. Format variables into prompt template

@@ -25,7 +25,7 @@ graph TD
     subgraph AgenticLoop["4. Actor-Critic Closed Loop Workflow"]
         ACTOR["Actor Agent\n(modules/agent.py using gemini-3.1-flash-lite)"]
         TOOLS["Tool Suite\n(search_owasp, read_local_file, write_output_file)"]
-        CRITIC["Critic Evaluator\n(modules/evaluator.py with prompts/evaluator_prompt.txt)"]
+        CRITIC["Critic Evaluator\n(modules/evaluator.py with config/prompts/evaluator_prompt.txt)"]
         OUTPUTS["outputs/\n({timestamp}_{filename}_v{attempt}.ext)"]
     end
 
@@ -44,7 +44,7 @@ graph TD
     TOOLS --> OUTPUTS
 
     ACTOR -- "Generated Agent Output" --> CRITIC
-    CRITIC -- "STATUS: NEEDS_REVISION\n+ Critique (prompts/critique_prompt.txt)" --> ACTOR
+    CRITIC -- "STATUS: NEEDS_REVISION\n+ Critique (config/prompts/critique_prompt.txt)" --> ACTOR
     CRITIC -- "STATUS: PASSED" --> MAIN
 ```
 
@@ -65,15 +65,15 @@ The tools act as the Agent's interface to external systems, enabling it to query
   - Role: Artifact generation tool.
   - Function: Writes the refactored code fixes or markdown audit reports into the outputs/ folder. It automatically prefixes the session timestamp and appends the attempt version tag (e.g., {timestamp}_{filename}_v{attempt}.{ext}).
 
-## 2. Prompts (prompts/)
+## 2. Prompts (config/prompts/)
 
 The prompt suite governs the behavioral persona, evaluation criteria, and self-correction loops. All prompts are externalized into dedicated text files to separate prompt engineering from Python code.
 
-- prompts/security_auditor.txt (Actor Persona):
+- config/prompts/security_auditor.txt (Actor Persona):
   - Role: Instructs the primary LangChain agent (gemini-3.1-flash-lite).
   - Function: Defines the system identity as an expert AI Application Security Auditor, dictating how to analyze targets, invoke tools, and structure findings.
 
-- prompts/evaluator_prompt.txt (Critic Rubric):
+- config/prompts/evaluator_prompt.txt (Critic Rubric):
   - Role: Evaluator template loaded in modules/evaluator.py.
   - Function: Establishes the reflection evaluation rubric across three criteria:
     - Vulnerability Accuracy: Did the agent correctly identify OWASP codes?
@@ -81,7 +81,7 @@ The prompt suite governs the behavioral persona, evaluation criteria, and self-c
     - Action Completion: Were target files inspected and output files written?
       - Forces a strict decision format: STATUS: [PASSED or NEEDS_REVISION] and CRITIQUE: `<feedback>`.
 
-- prompts/critique_prompt.txt (Feedback Loop Re-injection):
+- config/prompts/critique_prompt.txt (Feedback Loop Re-injection):
   - Role: Re-injection template loaded in main.py.
   - Function: Formats the evaluator's feedback from a failed pass and appends it back into conversation_messages as a follow-up human prompt for attempt N + 1.
 
