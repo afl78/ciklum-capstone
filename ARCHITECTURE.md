@@ -1,3 +1,5 @@
+# Architecture
+
 ```mermaid
 graph TD
     %% Environment & Configuration
@@ -47,7 +49,6 @@ graph TD
     CRITIC -- "STATUS: NEEDS_REVISION\n+ Critique (config/prompts/critique_prompt.txt)" --> ACTOR
     CRITIC -- "STATUS: PASSED" --> MAIN
 ```
-
 
 ## 1. Tools (modules/tools.py)
 
